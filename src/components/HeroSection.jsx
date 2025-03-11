@@ -15,13 +15,13 @@ const HeroSection = () => {
     },
     {
       image:
-        "https://images.unsplash.com/photo-1576438162986-c685b87fbc4b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80",
+        "https://static.wixstatic.com/media/b57604_f7f0af1f268647fca15ee1bb414b8097~mv2.webp/v1/fill/w_980,h_551,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/b57604_f7f0af1f268647fca15ee1bb414b8097~mv2.webp",
       title: "Magical Water Shows",
       subtitle: "Be mesmerized by our spectacular water fountain shows",
     },
     {
       image:
-        "https://images.unsplash.com/photo-1564226803042-24b2c8d80c4c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80",
+        "https://housing.com/news/wp-content/uploads/2023/05/Why-visit-Brindavan-Gardens-Mysore-f.jpg",
       title: "Family-friendly Activities",
       subtitle: "Fun activities for visitors of all ages",
     },

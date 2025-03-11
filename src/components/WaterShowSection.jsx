@@ -9,9 +9,9 @@ const WaterShowSection = () => {
   const sectionRef = useRef(null)
 
   const waterShowImages = [
-    "https://images.unsplash.com/photo-1572416857139-24c930062108?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80",
-    "https://images.unsplash.com/photo-1533757704860-f673d910d447?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80",
-    "https://images.unsplash.com/photo-1535507568891-8add742478e2?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80",
+    "https://housing.com/news/wp-content/uploads/2023/05/Why-visit-Brindavan-Gardens-Mysore-f.jpg",
+    "https://ksrbrothers.com/wp-content/uploads/2023/07/World-of-Musical-Water-Fountain-Dealers-in-India-e1690267530374.jpg",
+    "https://tiimg.tistatic.com/fp/2/003/509/laser-show-fountains-860.jpg",
   ]
 
   useEffect(() => {

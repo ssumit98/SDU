@@ -5,6 +5,7 @@ import Navbar from "./components/Navbar"
 import HeroSection from "./components/HeroSection"
 import WaterShowSection from "./components/WaterShowSection"
 import ActivitiesSection from "./components/ActivitiesSection"
+import GallerySection from "./components/GallerySection"
 import LocationSection from "./components/LocationSection"
 import ChatButton from "./components/ChatButton"
 import Footer from "./components/Footer"
@@ -33,6 +34,7 @@ function App() {
         <HeroSection />
         <WaterShowSection />
         <ActivitiesSection />
+        <GallerySection />
         <LocationSection />
       </main>
       <ChatButton />
