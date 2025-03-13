@@ -13,6 +13,7 @@ const Navbar = ({ user, isScrolled, onFeedbackClick }) => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const menuRef = useRef(null)
+  const isMobileRef = useRef(false)
 
   const isAnonymous = user && !user.email
 
@@ -27,10 +28,12 @@ const Navbar = ({ user, isScrolled, onFeedbackClick }) => {
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth <= 768) {
-        setIsMenuOpen(true)
-      } else {
-        setIsMenuOpen(false)
+      const isMobile = window.innerWidth <= 768;
+      isMobileRef.current = isMobile;
+      
+      // Only update menu state if we're switching between mobile and desktop
+      if (isMobile !== isMobileRef.current) {
+        setIsMenuOpen(isMobile);
       }
     }
 
@@ -60,6 +63,10 @@ const Navbar = ({ user, isScrolled, onFeedbackClick }) => {
     }
   }
 
+  const handleMobileToggle = () => {
+    setIsMenuOpen(!isMenuOpen)
+  }
+
   return (
     <>
       <nav className={`navbar ${isScrolled ? "scrolled" : ""} ${isMenuOpen ? "menu-open" : ""}`}>
@@ -68,7 +75,7 @@ const Navbar = ({ user, isScrolled, onFeedbackClick }) => {
             Sant Dnyaneshwar Udyan
           </a>
 
-          <div className="mobile-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+          <div className="mobile-toggle" onClick={handleMobileToggle}>
             <div className={`bar ${isMenuOpen ? "open" : ""}`}></div>
             <div className={`bar ${isMenuOpen ? "open" : ""}`}></div>
             <div className={`bar ${isMenuOpen ? "open" : ""}`}></div>
