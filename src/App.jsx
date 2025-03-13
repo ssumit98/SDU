@@ -9,10 +9,15 @@ import GallerySection from "./components/GallerySection"
 import LocationSection from "./components/LocationSection"
 import ChatButton from "./components/ChatButton"
 import Footer from "./components/Footer"
+import FeedbackModal from "./components/FeedbackModal"
 import "./App.css"
+import { onAuthStateChanged } from "firebase/auth"
+import { auth } from "./firebase"
 
-function App() {
+const App = () => {
+  const [user, setUser] = useState(null)
   const [isScrolled, setIsScrolled] = useState(false)
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -23,13 +28,57 @@ function App() {
       }
     }
 
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user)
+    })
+
+    // Check URL parameter on initial load
+    const urlParams = new URLSearchParams(window.location.search)
+    if (urlParams.get("feedback-modal") === "true") {
+      setIsFeedbackModalOpen(true)
+    }
+
+    // Listen for URL changes
+    const handleUrlChange = () => {
+      const urlParams = new URLSearchParams(window.location.search)
+      setIsFeedbackModalOpen(urlParams.get("feedback-modal") === "true")
+    }
+
     window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
+    window.addEventListener("popstate", handleUrlChange)
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll)
+      window.removeEventListener("popstate", handleUrlChange)
+      unsubscribe()
+    }
   }, [])
+
+  const handleFeedbackClick = () => {
+    setIsFeedbackModalOpen(true)
+    // Update URL without triggering navigation
+    const url = new URL(window.location.href)
+    url.searchParams.set("feedback-modal", "true")
+    window.history.pushState({}, "", url)
+  }
+
+  const handleFeedbackModalClose = (isOpen) => {
+    setIsFeedbackModalOpen(isOpen)
+    if (!isOpen) {
+      // Remove feedback-modal from URL when modal is closed
+      const url = new URL(window.location.href)
+      url.searchParams.delete("feedback-modal")
+      window.history.replaceState({}, "", url)
+    }
+  }
 
   return (
     <div className="app">
-      <Navbar isScrolled={isScrolled} />
+      <Navbar 
+        user={user} 
+        isScrolled={isScrolled} 
+        onFeedbackClick={handleFeedbackClick}
+      />
       <main>
         <HeroSection />
         <WaterShowSection />
@@ -39,6 +88,10 @@ function App() {
       </main>
       <ChatButton />
       <Footer />
+      <FeedbackModal 
+        isOpen={isFeedbackModalOpen} 
+        onClose={handleFeedbackModalClose}
+      />
     </div>
   )
 }
