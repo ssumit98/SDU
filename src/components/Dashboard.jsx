@@ -5,7 +5,7 @@ import AdminAuthModal from './AdminAuthModal';
 import FeedbacksTable from './FeedbacksTable';
 import './Dashboard.css';
 
-const Dashboard = () => {
+const Dashboard = ({ isVerified }) => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
@@ -79,6 +79,16 @@ const Dashboard = () => {
       console.error('Error signing out:', error);
     }
   };
+
+  // If not verified, show a loading state
+  if (!isVerified) {
+    return (
+      <div className="dashboard-loading">
+        <div className="spinner"></div>
+        <p>Verifying admin access...</p>
+      </div>
+    );
+  }
 
   // Show loading state while checking authentication
   if (isChecking) {

@@ -1,48 +1,39 @@
 import { useState, useEffect } from 'react';
 import { collection, query, orderBy, limit, startAfter, getDocs, where } from 'firebase/firestore';
 import { db } from '../firebase';
-import { jsPDF } from "jspdf";
+import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import './FeedbacksTable.css';
 
 const FeedbacksTable = () => {
-  const [feedbacks, setFeedbacks] = useState([]);
+  const [allFeedbacks, setAllFeedbacks] = useState([]); // Store all fetched feedbacks
+  const [displayedFeedbacks, setDisplayedFeedbacks] = useState([]); // Filtered feedbacks to display
   const [loading, setLoading] = useState(true);
   const [lastVisible, setLastVisible] = useState(null);
   const [hasMore, setHasMore] = useState(true);
   const [dateFilter, setDateFilter] = useState('');
-  const [userTypeFilter, setUserTypeFilter] = useState('all'); // 'all', 'anonymous', 'registered'
+  const [userTypeFilter, setUserTypeFilter] = useState('all');
   const [selectedRows, setSelectedRows] = useState(new Set());
   
   const ITEMS_PER_PAGE = 5;
 
-  const fetchFeedbacks = async (filterDate = null, filterUserType = 'all', startAfterDoc = null) => {
+  const fetchFeedbacks = async (startAfterDoc = null) => {
     try {
       let feedbackQuery = collection(db, 'feedbacks');
-      let constraints = [];
+      let constraints = [
+        orderBy('createdAt', 'desc'),
+        limit(ITEMS_PER_PAGE)
+      ];
 
-      // Base ordering
-      constraints.push(orderBy('createdAt', 'desc'));
-
-      // Date filter
-      if (filterDate) {
-        const startDate = new Date(filterDate);
+      if (dateFilter) {
+        const startDate = new Date(dateFilter);
         startDate.setHours(0, 0, 0, 0);
-        const endDate = new Date(filterDate);
+        const endDate = new Date(dateFilter);
         endDate.setHours(23, 59, 59, 999);
         constraints.push(where('createdAt', '>=', startDate));
         constraints.push(where('createdAt', '<=', endDate));
       }
 
-      // User type filter
-      if (filterUserType === 'anonymous') {
-        constraints.push(where('email', '==', 'anonymous@user.com'));
-      } else if (filterUserType === 'registered') {
-        constraints.push(where('email', '!=', 'anonymous@user.com'));
-      }
-
-      // Pagination
-      constraints.push(limit(ITEMS_PER_PAGE));
       if (startAfterDoc) {
         constraints.push(startAfter(startAfterDoc));
       }
@@ -57,9 +48,9 @@ const FeedbacksTable = () => {
       }));
 
       if (startAfterDoc) {
-        setFeedbacks(prev => [...prev, ...newFeedbacks]);
+        setAllFeedbacks(prev => [...prev, ...newFeedbacks]);
       } else {
-        setFeedbacks(newFeedbacks);
+        setAllFeedbacks(newFeedbacks);
       }
 
       setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1]);
@@ -71,13 +62,31 @@ const FeedbacksTable = () => {
     }
   };
 
+  // Apply filters to allFeedbacks
+  const applyFilters = () => {
+    let filtered = [...allFeedbacks];
+
+    // Apply user type filter
+    if (userTypeFilter === 'anonymous') {
+      filtered = filtered.filter(feedback => feedback.email === 'anonymous@user.com');
+    } else if (userTypeFilter === 'registered') {
+      filtered = filtered.filter(feedback => feedback.email !== 'anonymous@user.com');
+    }
+
+    setDisplayedFeedbacks(filtered);
+  };
+
   useEffect(() => {
-    fetchFeedbacks(dateFilter, userTypeFilter);
-  }, [dateFilter, userTypeFilter]);
+    fetchFeedbacks();
+  }, [dateFilter]); // Only fetch from DB when date filter changes
+
+  useEffect(() => {
+    applyFilters();
+  }, [allFeedbacks, userTypeFilter]); // Apply filters when all feedbacks or user type filter changes
 
   const handleLoadMore = () => {
     if (lastVisible) {
-      fetchFeedbacks(dateFilter, userTypeFilter, lastVisible);
+      fetchFeedbacks(lastVisible);
     }
   };
 
@@ -102,7 +111,7 @@ const FeedbacksTable = () => {
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      setSelectedRows(new Set(feedbacks.map(f => f.id)));
+      setSelectedRows(new Set(displayedFeedbacks.map(f => f.id)));
     } else {
       setSelectedRows(new Set());
     }
@@ -117,7 +126,7 @@ const FeedbacksTable = () => {
     doc.setFontSize(10);
     doc.text(`Generated on ${new Date().toLocaleDateString()}`, 14, 25);
 
-    const selectedFeedbacks = feedbacks.filter(f => selectedRows.has(f.id));
+    const selectedFeedbacks = displayedFeedbacks.filter(f => selectedRows.has(f.id));
     
     const tableData = selectedFeedbacks.map(feedback => [
       formatDate(feedback.createdAt),
@@ -202,7 +211,7 @@ const FeedbacksTable = () => {
                 <input
                   type="checkbox"
                   onChange={handleSelectAll}
-                  checked={selectedRows.size === feedbacks.length && feedbacks.length > 0}
+                  checked={selectedRows.size === displayedFeedbacks.length && displayedFeedbacks.length > 0}
                 />
               </th>
               <th>Date</th>
@@ -213,7 +222,7 @@ const FeedbacksTable = () => {
             </tr>
           </thead>
           <tbody>
-            {feedbacks.map((feedback) => (
+            {displayedFeedbacks.map((feedback) => (
               <tr 
                 key={feedback.id}
                 className={selectedRows.has(feedback.id) ? 'selected' : ''}
@@ -249,7 +258,7 @@ const FeedbacksTable = () => {
         </button>
       )}
 
-      {feedbacks.length === 0 && (
+      {displayedFeedbacks.length === 0 && (
         <div className="no-feedbacks">
           <p>No feedbacks found</p>
         </div>

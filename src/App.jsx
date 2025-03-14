@@ -1,6 +1,6 @@
 "use client"
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
 import Navbar from "./components/Navbar"
 import HeroSection from "./components/HeroSection"
@@ -12,14 +12,17 @@ import ChatButton from "./components/ChatButton"
 import Footer from "./components/Footer"
 import FeedbackModal from "./components/FeedbackModal"
 import Dashboard from "./components/Dashboard"
+import AdminOTPModal from "./components/AdminOTPModal"
 import "./App.css"
-import { onAuthStateChanged, setPersistence, browserLocalPersistence } from "firebase/auth"
-import { auth } from "./firebase"
+import { onAuthStateChanged, setPersistence, browserLocalPersistence, signOut } from "firebase/auth"
+import { auth, checkAdminStatus } from "./firebase"
 
 const App = () => {
   const [user, setUser] = useState(null)
   const [isScrolled, setIsScrolled] = useState(false)
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [isAdminVerified, setIsAdminVerified] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -29,7 +32,7 @@ const App = () => {
         await setPersistence(auth, browserLocalPersistence)
         
         // Listen for auth state changes
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
           if (currentUser) {
             // User is signed in
             setUser({
@@ -39,9 +42,13 @@ const App = () => {
               photoURL: currentUser.photoURL,
               isAnonymous: currentUser.isAnonymous
             })
+            const adminStatus = await checkAdminStatus(currentUser.uid)
+            setIsAdmin(adminStatus)
           } else {
             // User is signed out
             setUser(null)
+            setIsAdmin(false)
+            setIsAdminVerified(false)
           }
           setLoading(false)
         })
@@ -104,8 +111,28 @@ const App = () => {
     }
   }
 
+  const handleOTPSuccess = () => {
+    setIsAdminVerified(true)
+  }
+
+  const handleOTPCancel = async () => {
+    try {
+      await signOut(auth);
+      setIsAdmin(false);
+      setIsAdminVerified(false);
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
   if (loading) {
-    return <div>Loading...</div> // Or your loading component
+    return (
+      <div className="loading-screen">
+        <div className="spinner"></div>
+        <p>Loading...</p>
+      </div>
+    )
   }
 
   return (
@@ -113,31 +140,51 @@ const App = () => {
       <Routes>
         <Route 
           path="/dashboard/*" 
-          element={<Dashboard />} 
+          element={
+            isAdmin ? (
+              <>
+                <Dashboard isVerified={isAdminVerified} />
+                {!isAdminVerified && (
+                  <AdminOTPModal
+                    isOpen={true}
+                    onClose={handleOTPCancel}
+                    onSuccess={handleOTPSuccess}
+                    uid={user?.uid}
+                  />
+                )}
+              </>
+            ) : (
+              <Navigate to="/" replace />
+            )
+          } 
         />
         <Route 
           path="/" 
           element={
-            <div className="app">
-              <Navbar 
-                user={user} 
-                isScrolled={isScrolled} 
-                onFeedbackClick={handleFeedbackClick}
-              />
-              <main>
-                <HeroSection user={user} />
-                <WaterShowSection />
-                <ActivitiesSection />
-                <GallerySection />
-                <LocationSection />
-              </main>
-              <ChatButton />
-              <Footer />
-              <FeedbackModal 
-                isOpen={isFeedbackModalOpen} 
-                onClose={handleFeedbackModalClose}
-              />
-            </div>
+            isAdmin ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <div className="app">
+                <Navbar 
+                  user={user} 
+                  isScrolled={isScrolled} 
+                  onFeedbackClick={handleFeedbackClick}
+                />
+                <main>
+                  <HeroSection user={user} />
+                  <WaterShowSection />
+                  <ActivitiesSection />
+                  <GallerySection />
+                  <LocationSection />
+                </main>
+                <ChatButton />
+                <Footer />
+                <FeedbackModal 
+                  isOpen={isFeedbackModalOpen} 
+                  onClose={handleFeedbackModalClose}
+                />
+              </div>
+            )
           } 
         />
       </Routes>

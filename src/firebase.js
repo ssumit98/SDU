@@ -22,20 +22,29 @@ const provider = new GoogleAuthProvider();
 // Function to check if a user is an admin
 export const checkAdminStatus = async (uid) => {
   try {
-    console.log('Checking admin status for UID:', uid);
-    const adminDocRef = doc(db, 'admins', uid);
-    const adminDoc = await getDoc(adminDocRef);
-    const data = adminDoc.data();
-    console.log('Admin doc exists:', adminDoc.exists());
-    console.log('Admin doc data:', data);
-    // Check if admin is either boolean true or string 'true'
-    const isAdmin = adminDoc.exists() && 
-                   (data.admin === true || data.admin === 'true') && 
-                   data.adminId === uid;
-    console.log('Is admin:', isAdmin);
-    return isAdmin;
+    const adminDoc = await getDoc(doc(db, 'admins', uid));
+    if (adminDoc.exists()) {
+      const data = adminDoc.data();
+      return data.admin === true || data.admin === 'true';
+    }
+    return false;
   } catch (error) {
     console.error('Error checking admin status:', error);
+    return false;
+  }
+};
+
+// Function to verify admin OTP
+export const verifyAdminOTP = async (uid, enteredOTP) => {
+  try {
+    const adminDoc = await getDoc(doc(db, 'admins', uid));
+    if (adminDoc.exists()) {
+      const data = adminDoc.data();
+      return data.otpnumber === enteredOTP;
+    }
+    return false;
+  } catch (error) {
+    console.error('Error verifying OTP:', error);
     return false;
   }
 };

@@ -88,7 +88,7 @@
   animation: shake 0.5s ease-in-out;
 }
 
-.close-button {
+/* .close-button {
   position: absolute;
   top: 1rem;
   right: 1rem;
@@ -109,7 +109,7 @@
 .close-button:hover {
   color: var(--primary);
   background-color: rgba(0, 0, 0, 0.05);
-}
+} */
 
 @keyframes modalOpen {
   from {
