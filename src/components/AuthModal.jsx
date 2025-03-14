@@ -6,7 +6,7 @@ import { doc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import "./AuthModal.css";
 import googleIcon from "../assets/google-icon.png";
 
-const AuthModal = ({ isOpen, onClose }) => {
+const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -49,9 +49,18 @@ const AuthModal = ({ isOpen, onClose }) => {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       
+      // Cache user data in localStorage
+      localStorage.setItem('user', JSON.stringify({
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL
+      }));
+      
       await createOrUpdateUser(user, true);
       console.log("Successfully signed in with Google:", user);
       onClose();
+      onAuthSuccess?.();
     } catch (error) {
       console.error("Google sign-in error:", error);
       setShowEmailAuth(true);
@@ -84,8 +93,17 @@ const AuthModal = ({ isOpen, onClose }) => {
         await createOrUpdateUser(user, false);
       }
       
+      // Cache user data in localStorage
+      localStorage.setItem('user', JSON.stringify({
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName || email.split('@')[0],
+        photoURL: user.photoURL
+      }));
+      
       console.log("Successfully signed in with email");
       onClose();
+      onAuthSuccess?.();
     } catch (error) {
       console.error("Email sign-in error:", error);
       setError(

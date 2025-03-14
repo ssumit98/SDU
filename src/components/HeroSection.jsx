@@ -1,10 +1,17 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import AuthModal from "./AuthModal"
+import BookingModal from "./BookingModal"
 import "./HeroSection.css"
 
-const HeroSection = () => {
+const HeroSection = ({ user }) => {
   const [activeSlide, setActiveSlide] = useState(0)
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false)
+  const [isBookingFlow, setIsBookingFlow] = useState(false)
+
+  const isAnonymous = user && !user.email
 
   const slides = [
     {
@@ -39,45 +46,77 @@ const HeroSection = () => {
     setActiveSlide(index)
   }
 
-  return (
-    <section className="hero-section">
-      <div className="hero-carousel">
-        {slides.map((slide, index) => (
-          <div
-            key={index}
-            className={`hero-slide ${index === activeSlide ? "active" : ""}`}
-            style={{ backgroundImage: `url(${slide.image})` }}
-          >
-            <div className="slide-overlay"></div>
-          </div>
-        ))}
-      </div>
+  const handleBookingClick = () => {
+    if (!user || isAnonymous) {
+      setIsBookingFlow(true)
+      setIsAuthModalOpen(true)
+    } else {
+      setIsBookingModalOpen(true)
+    }
+  }
 
-      <div className="hero-content">
-        <div className="hero-text-container">
+  const handleAuthSuccess = () => {
+    setIsAuthModalOpen(false)
+    if (isBookingFlow) {
+      setIsBookingModalOpen(true)
+    }
+    setIsBookingFlow(false)
+  }
+
+  return (
+    <>
+      <section className="hero-section">
+        <div className="hero-carousel">
           {slides.map((slide, index) => (
-            <div key={index} className={`hero-text ${index === activeSlide ? "active" : ""}`}>
-              <h1 className="hero-title">{slide.title}</h1>
-              <p className="hero-subtitle">{slide.subtitle}</p>
+            <div
+              key={index}
+              className={`hero-slide ${index === activeSlide ? "active" : ""}`}
+              style={{ backgroundImage: `url(${slide.image})` }}
+            >
+              <div className="slide-overlay"></div>
             </div>
           ))}
         </div>
 
-        <a href="#book" className="btn btn-primary book-btn">
-          Book Tickets Now
-        </a>
+        <div className="hero-content">
+          <div className="hero-text-container">
+            {slides.map((slide, index) => (
+              <div key={index} className={`hero-text ${index === activeSlide ? "active" : ""}`}>
+                <h1 className="hero-title">{slide.title}</h1>
+                <p className="hero-subtitle">{slide.subtitle}</p>
+              </div>
+            ))}
+          </div>
 
-        <div className="carousel-dots">
-          {slides.map((_, index) => (
-            <span
-              key={index}
-              className={`dot ${index === activeSlide ? "active" : ""}`}
-              onClick={() => handleDotClick(index)}
-            ></span>
-          ))}
+          <button onClick={handleBookingClick} className="btn btn-primary book-btn" disabled>
+            Book Tickets Now
+          </button>
+
+          <div className="carousel-dots">
+            {slides.map((_, index) => (
+              <span
+                key={index}
+                className={`dot ${index === activeSlide ? "active" : ""}`}
+                onClick={() => handleDotClick(index)}
+              ></span>
+            ))}
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => {
+          setIsAuthModalOpen(false)
+          setIsBookingFlow(false)
+        }}
+        onAuthSuccess={handleAuthSuccess}
+      />
+      <BookingModal 
+        isOpen={isBookingModalOpen} 
+        onClose={() => setIsBookingModalOpen(false)}
+      />
+    </>
   )
 }
 

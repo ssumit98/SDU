@@ -1,5 +1,6 @@
 "use client"
 
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
 import { useState, useEffect } from "react"
 import Navbar from "./components/Navbar"
 import HeroSection from "./components/HeroSection"
@@ -10,14 +11,50 @@ import LocationSection from "./components/LocationSection"
 import ChatButton from "./components/ChatButton"
 import Footer from "./components/Footer"
 import FeedbackModal from "./components/FeedbackModal"
+import Dashboard from "./components/Dashboard"
 import "./App.css"
-import { onAuthStateChanged } from "firebase/auth"
+import { onAuthStateChanged, setPersistence, browserLocalPersistence } from "firebase/auth"
 import { auth } from "./firebase"
 
 const App = () => {
   const [user, setUser] = useState(null)
   const [isScrolled, setIsScrolled] = useState(false)
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        // Set persistence to LOCAL
+        await setPersistence(auth, browserLocalPersistence)
+        
+        // Listen for auth state changes
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+          if (currentUser) {
+            // User is signed in
+            setUser({
+              uid: currentUser.uid,
+              email: currentUser.email,
+              displayName: currentUser.displayName || currentUser.email?.split('@')[0],
+              photoURL: currentUser.photoURL,
+              isAnonymous: currentUser.isAnonymous
+            })
+          } else {
+            // User is signed out
+            setUser(null)
+          }
+          setLoading(false)
+        })
+
+        return () => unsubscribe()
+      } catch (error) {
+        console.error("Error setting up auth:", error)
+        setLoading(false)
+      }
+    }
+
+    initializeAuth()
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,10 +64,6 @@ const App = () => {
         setIsScrolled(false)
       }
     }
-
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user)
-    })
 
     // Check URL parameter on initial load
     const urlParams = new URLSearchParams(window.location.search)
@@ -50,7 +83,6 @@ const App = () => {
     return () => {
       window.removeEventListener("scroll", handleScroll)
       window.removeEventListener("popstate", handleUrlChange)
-      unsubscribe()
     }
   }, [])
 
@@ -72,27 +104,44 @@ const App = () => {
     }
   }
 
+  if (loading) {
+    return <div>Loading...</div> // Or your loading component
+  }
+
   return (
-    <div className="app">
-      <Navbar 
-        user={user} 
-        isScrolled={isScrolled} 
-        onFeedbackClick={handleFeedbackClick}
-      />
-      <main>
-        <HeroSection />
-        <WaterShowSection />
-        <ActivitiesSection />
-        <GallerySection />
-        <LocationSection />
-      </main>
-      <ChatButton />
-      <Footer />
-      <FeedbackModal 
-        isOpen={isFeedbackModalOpen} 
-        onClose={handleFeedbackModalClose}
-      />
-    </div>
+    <Router>
+      <Routes>
+        <Route 
+          path="/dashboard/*" 
+          element={<Dashboard />} 
+        />
+        <Route 
+          path="/" 
+          element={
+            <div className="app">
+              <Navbar 
+                user={user} 
+                isScrolled={isScrolled} 
+                onFeedbackClick={handleFeedbackClick}
+              />
+              <main>
+                <HeroSection user={user} />
+                <WaterShowSection />
+                <ActivitiesSection />
+                <GallerySection />
+                <LocationSection />
+              </main>
+              <ChatButton />
+              <Footer />
+              <FeedbackModal 
+                isOpen={isFeedbackModalOpen} 
+                onClose={handleFeedbackModalClose}
+              />
+            </div>
+          } 
+        />
+      </Routes>
+    </Router>
   )
 }
 

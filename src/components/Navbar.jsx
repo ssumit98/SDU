@@ -5,6 +5,7 @@ import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from "firebas
 import { auth } from "../firebase"
 import AuthModal from "./AuthModal"
 import UserMenu from "./UserMenu"
+import BookingModal from "./BookingModal"
 import "./Navbar.css"
 import { Link } from "react-router-dom"
 
@@ -12,6 +13,8 @@ const Navbar = ({ user, isScrolled, onFeedbackClick }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false)
+  const [isBookingFlow, setIsBookingFlow] = useState(false)
   const menuRef = useRef(null)
   const isMobileRef = useRef(false)
 
@@ -57,10 +60,31 @@ const Navbar = ({ user, isScrolled, onFeedbackClick }) => {
   }, [])
 
   const handleAuthClick = () => {
+    setIsBookingFlow(false)
     setIsAuthModalOpen(true)
     if (isMenuOpen) {
       setIsMenuOpen(false)
     }
+  }
+
+  const handleBookingClick = () => {
+    if (!user || isAnonymous) {
+      setIsBookingFlow(true)
+      setIsAuthModalOpen(true)
+    } else {
+      setIsBookingModalOpen(true)
+    }
+    if (isMenuOpen) {
+      setIsMenuOpen(false)
+    }
+  }
+
+  const handleAuthSuccess = () => {
+    setIsAuthModalOpen(false)
+    if (isBookingFlow) {
+      setIsBookingModalOpen(true)
+    }
+    setIsBookingFlow(false)
   }
 
   const handleMobileToggle = () => {
@@ -115,15 +139,26 @@ const Navbar = ({ user, isScrolled, onFeedbackClick }) => {
                 </button>
               )}
             </li>
-            {/* <li className="nav-btn book-btn">
-              <a href="#book" className="btn btn-primary">
+            <li className="nav-btn book-btn">
+              <button onClick={handleBookingClick} className="btn btn-primary" disabled>
                 Book Tickets
-              </a>
-            </li> */}
+              </button>
+            </li>
           </ul>
         </div>
       </nav>
-      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => {
+          setIsAuthModalOpen(false)
+          setIsBookingFlow(false)
+        }}
+        onAuthSuccess={handleAuthSuccess}
+      />
+      <BookingModal 
+        isOpen={isBookingModalOpen} 
+        onClose={() => setIsBookingModalOpen(false)}
+      />
     </>
   )
 }

@@ -45,8 +45,8 @@ const FeedbackModal = ({ isOpen, onClose }) => {
           // If user is already signed in (either anonymously or with Google)
           setUserData({
             uid: currentUser.uid,
-            email: currentUser.email,
-            displayName: currentUser.displayName || currentUser.email.split('@')[0]
+            email: currentUser.email || "anonymous@user.com",
+            displayName: currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : "Anonymous User")
           });
         }
         setIsInitialized(true);
