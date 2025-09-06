@@ -140,7 +140,7 @@ const Navbar = ({ user, isScrolled, onFeedbackClick }) => {
               )}
             </li>
             <li className="nav-btn book-btn">
-              <button onClick={handleBookingClick} className="btn btn-primary" disabled>
+              <button onClick={handleBookingClick} className="btn btn-primary">
                 Book Tickets
               </button>
             </li>

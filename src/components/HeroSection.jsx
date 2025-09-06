@@ -88,7 +88,7 @@ const HeroSection = ({ user }) => {
             ))}
           </div>
 
-          <button onClick={handleBookingClick} className="btn btn-primary book-btn" disabled>
+          <button onClick={handleBookingClick} className="btn btn-primary book-btn" >
             Book Tickets Now
           </button>
 
